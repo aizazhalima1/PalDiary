@@ -1,6 +1,9 @@
 const passport = require("passport");
 const validator = require("validator");
 const User = require("../models/User");
+const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+const bcrypt = require('bcrypt')
 
 exports.getLogin = (req, res) => {
   if (req.user) {
@@ -75,10 +78,10 @@ exports.postSignup = async (req, res, next) => {
     const validationErrors = [];
     if (!validator.isEmail(req.body.email))
       validationErrors.push({ msg: "Please enter a valid email address." });
-    if (!validator.isLength(req.body.password, { min: 8 }))
+    if (!validator.isLength(req.body.password, { min: 8 })){
       validationErrors.push({
         msg: "Password must be at least 8 characters long"
-      });
+      })};
     if (req.body.password !== req.body.confirmPassword)
       validationErrors.push({ msg: "Passwords do not match" });
 
@@ -121,4 +124,86 @@ exports.postSignup = async (req, res, next) => {
   }
 };
 
+exports.getRequest = (req, res) => {
 
+  res.render("reset", {
+    title: "Reset",
+  });
+};
+exports.requestReset = async (req, res, next) => {
+  const { email } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(400).send('No account with that email found.');
+  }
+
+  // Generate a reset token
+  const token = crypto.randomBytes(20).toString('hex');
+  user.resetPasswordToken = token;
+  user.resetPasswordExpires = Date.now() + 3600000; // 1 hour from now
+
+
+  await user.save();
+
+  // Send the token via email
+  const transporter = nodemailer.createTransport({
+    service: process.env.SERVICE, // Configure your email service
+    port:process.env.PORT,
+    auth: {
+      user: process.env.USER,
+      pass: process.env.PASS,
+    
+    },
+  });
+
+
+  const mailOptions = {
+    to: user.email,
+    from: process.env.USER,
+    subject: 'Password Reset',
+    text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
+           Please click on the following link, or paste this into your browser to complete the process:\n\n
+           http://${req.headers.host}/reset/${token}\n\n
+           If you did not request this, please ignore this email and your password will remain unchanged.\n`,
+  };
+
+  await transporter.sendMail(mailOptions);
+  res.status(200).send('Password reset link sent to your email.');
+};
+exports.getResetRequest = (req, res) => {
+
+  res.render("change", {
+    title: "Change Password",
+    token: req.params.token
+  });
+};
+
+exports.postResetRequest = async (req, res) => {
+  const validationErrors = [];
+  const {token}  = req.params;
+  const password  = req.body.password;
+  if (!validator.isLength(password, { min: 8 })){
+    validationErrors.push({
+      msg: "Password must be at least 8 characters long"
+    });}
+    if (validationErrors.length) {
+      req.flash("errors", validationErrors);
+      return res.redirect("../request-reset");
+    }
+
+  const user = await User.findOne({
+    resetPasswordToken: token,
+  });
+  
+
+  if (!user) {
+    return res.status(400).send('Password reset token is invalid or has expired.'); 
+  }
+  user.password=req.body.password
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+
+  await user.save();
+  res.status(200).send('Password has been reset.');
+}

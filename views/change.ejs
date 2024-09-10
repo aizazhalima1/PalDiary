@@ -1,4 +1,11 @@
 <%- include('partials/header') -%>
+<% if (messages.length > 0) { %>
+    <div class="alert alert-danger">
+        <% messages.forEach(function(msg) { %>
+            <p><%= msg.msg %></p>
+        <% }); %>
+    </div>
+<% } %>
 
 <main class="container">
   <div class="row justify-content-center">
@@ -11,6 +18,13 @@
             class="form-control"
             id="exampleInputPassword1"
             name="password"
+          />
+          <label for="exampleInputPassword2" class="form-label">Confirm Password</label>
+          <input
+            type="password"
+            class="form-control"
+            id="exampleInputPassword2"
+            name="confirmPassword"
           />
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>

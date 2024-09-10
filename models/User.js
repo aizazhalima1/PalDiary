@@ -1,11 +1,20 @@
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
+const crypto = require('crypto') 
 
 const UserSchema = new mongoose.Schema({
   userName: { type: String, unique: true },
   email: { type: String, unique: true },
   password: String,
   resetPasswordToken: String,
+  image: {
+    type: String,
+    require: true,
+  },
+  cloudinaryId: {
+    type: String,
+    require: true,
+  },
   resetPasswordExpires: Date,
 });
 
@@ -40,5 +49,9 @@ UserSchema.methods.comparePassword = function comparePassword(
     cb(err, isMatch);
   });
 };
-
+// Static method to generate password reset token
+UserSchema.statics.generateResetToken = function() {
+  const token = crypto.randomBytes(20).toString('hex');
+  return token;
+};
 module.exports = mongoose.model("User", UserSchema);

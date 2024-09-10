@@ -1,5 +1,6 @@
 const cloudinary = require("../middleware/cloudinary");
 const Post = require("../models/Post");
+const User= require("../models/User")
 
 module.exports = {
   getProfile: async (req, res) => { 
@@ -9,6 +10,8 @@ module.exports = {
       //console.log(req.user) to see everything
       //Grabbing just the posts of the logged-in user
       const posts = await Post.find({ user: req.user.id });
+      console.log(posts)
+      //const user = await User.find({ _id: req.user.id });
       //Sending post data from mongodb and user data to ejs template
       res.render("profile.ejs", { posts: posts, user: req.user });
     } catch (err) {
@@ -27,24 +30,58 @@ module.exports = {
       console.log(err);
     }
   },
-  createPost: async (req, res) => {
+  createProfilePicture: async (req, res) => {
     try {
+      let user = await User.findOne({ _id: req.user })
+      console.log(user)
+      await cloudinary.uploader.destroy(user.cloudinaryId)
       // Upload image to cloudinary
       const result = await cloudinary.uploader.upload(req.file.path);
-
+      console.log(result)
       //media is stored on cloudainary - the above request responds with url to media and the media id that you will need when deleting content 
-      await Post.create({
-        title: req.body.title,
-        image: result.secure_url,
-        cloudinaryId: result.public_id,
-        caption: req.body.caption,
-        likes: 0,
-        user: req.user.id,
-      });
-      console.log("Post has been added!");
+      await User.findOneAndUpdate(
+        { _id: req.user },
+        { $set: { cloudinaryId: result.public_id, image: result.secure_url } },
+        { new: true },
+        console.log(req.user)
+        //(err, user) => {
+        //  if (err) {
+        //    console.error(err);
+        //    return;
+        //  }
+        //  console.log(user);
+        //}
+      )
+      console.log("Picture has been changed");
       res.redirect("/profile");
     } catch (err) {
       console.log(err);
+    }
+  },
+  createPost: async (req, res) => {
+    try {
+      console.log('Request Body:', req.body); // Log request body for debugging
+  
+      const { title, caption } = req.body;
+  
+      // Check if the title and caption are missing
+      if (!title || !caption) {
+        return res.status(400).send('Title and caption are required.');
+      }
+  
+      // Create a new post
+      await Post.create({
+        title: title,
+        caption: caption,
+        likes: 0, // Default value
+        user: req.user ? req.user.id : null, // Ensure req.user exists
+      });
+  
+      console.log("Post has been added!");
+      res.redirect("/profile");
+    } catch (err) {
+      console.error('Error creating post:', err);
+      res.status(500).send('Internal Server Error');
     }
   },
   likePost: async (req, res) => {

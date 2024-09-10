@@ -108,7 +108,9 @@ exports.postSignup = async (req, res, next) => {
     const user = new User({
       userName: req.body.userName,
       email: req.body.email,
-      password: req.body.password
+      password: req.body.password,
+      cloudinaryId:'v1725253996',
+      image:'//res.cloudinary.com/dqh520gol/image/upload/v1725253996/blank-profile-picture-973460_1280_qei3fs.png'
     });
 
     await user.save();
@@ -175,35 +177,45 @@ exports.getResetRequest = (req, res) => {
 
   res.render("change", {
     title: "Change Password",
-    token: req.params.token
+    token: req.params.token,
+    messages: req.flash('errors')
   });
 };
 
 exports.postResetRequest = async (req, res) => {
-  const validationErrors = [];
-  const {token}  = req.params;
-  const password  = req.body.password;
-  if (!validator.isLength(password, { min: 8 })){
-    validationErrors.push({
-      msg: "Password must be at least 8 characters long"
-    });}
-    if (validationErrors.length) {
-      req.flash("errors", validationErrors);
-      return res.redirect("../request-reset");
+  const { token } = req.params;
+  const { password, confirmPassword } = req.body;
+
+  if (!validator.isLength(password, { min: 8 })) {
+    req.flash('errors', { msg: 'Password must be at least 8 characters long' });
+    return res.redirect('change');
+  }
+
+  if (password !== req.body.confirmPassword) {
+    req.flash('errors', { msg: 'Passwords do not match' });
+    return res.redirect('change');
+  }
+
+  try {
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).send('Password reset token is invalid or has expired.');
     }
 
-  const user = await User.findOne({
-    resetPasswordToken: token,
-  });
-  
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
 
-  if (!user) {
-    return res.status(400).send('Password reset token is invalid or has expired.'); 
+    await user.save();
+
+    res.status(200).send('Password has been reset.');
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    res.status(500).send('An error occurred while resetting the password.');
   }
-  user.password=req.body.password
-  user.resetPasswordToken = undefined;
-  user.resetPasswordExpires = undefined;
-
-  await user.save();
-  res.status(200).send('Password has been reset.');
-}
+  
+};

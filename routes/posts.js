@@ -9,8 +9,10 @@ const { ensureAuth } = require("../middleware/auth");
 //post/:id, post/createPost, post/likePost/:id, post/deletePost/:id
 router.get("/:id", ensureAuth, postsController.getPost);
 
+//Add profile picture
+router.post("/createProfilePicture", upload.single("file"), postsController.createProfilePicture);
 //Enables user to create post w/ cloudinary for media uploads
-router.post("/createPost", upload.single("file"), postsController.createPost);
+router.post("/createPost",postsController.createPost);
 
 //Enables user to like post. In controller, uses POST model to update likes by 1
 router.put("/likePost/:id", postsController.likePost);

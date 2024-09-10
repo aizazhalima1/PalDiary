@@ -188,12 +188,12 @@ exports.postResetRequest = async (req, res) => {
 
   if (!validator.isLength(password, { min: 8 })) {
     req.flash('errors', { msg: 'Password must be at least 8 characters long' });
-    return res.redirect('change');
+    return res.redirect(`/reset/${token}`);
   }
 
   if (password !== req.body.confirmPassword) {
     req.flash('errors', { msg: 'Passwords do not match' });
-    return res.redirect('change');
+    return res.redirect(`/reset/${token}`);
   }
 
   try {

@@ -11,6 +11,9 @@ router.get("/:id", ensureAuth, postsController.getPost);
 
 //Add profile picture
 router.post("/createProfilePicture", upload.single("file"), postsController.createProfilePicture);
+//Assign a pal
+router.post("/findPal", postsController.findPal);
+
 //Enables user to create post w/ cloudinary for media uploads
 router.post("/createPost",postsController.createPost);
 

@@ -15,18 +15,21 @@
           
               <p><strong>User Name</strong>: <%= user.userName %></p>
               <p><strong>Email</strong>: <%= user.email %></p>
+              <% if(!user.pal){ %>
+                <form action="/post/findPal" method="POST">
+                <button type="submit" class="btn btn-primary" >Find pal</button>
+                </form>
+              <% }else{ %>
+                <p><strong>Pal</strong>: <%= user.pal %></p>
+                <% } %>
               <a href="/logout" class="col-3 btn btn-primary">Logout</a>
               </div>
           <div class="mt-5">
-            <h2>Add a post</h2>
+            <h2>Our Diary</h2>
             <form action="/post/createPost"  method="POST">
               <div class="mb-3">
-                  <label for="title" class="form-label">Title</label>
-                  <input type="text" class="form-control" id="title" name="title">
-              </div>
-              <div class="mb-3">
-                <label for="caption" class="form-label">Caption</label>
-                <textarea class="form-control" id="caption" name="caption"></textarea>
+                <label for="caption" class="form-label"></label>
+                <textarea class="form-control" id="diary" name="diary"></textarea>
               </div>
                 <button type="submit" class="btn btn-primary" >Submit</button>
             </form>
@@ -35,10 +38,10 @@
       <div class="col-6">
         <ul class="row list-unstyled">
         <% for(var i=0; i<posts.length; i++) {%>
-          <li class="col-6 justify-content-between mt-5">
+          <li >
         
-             <h2> <%= posts[i].title%> </h2>  
-             <h2> <%= posts[i].caption%> </h2>  
+             <h2> <%= posts[i].diary%> </h2>  
+         
           </li>
         <% } %>
         </ul>

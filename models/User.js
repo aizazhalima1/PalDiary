@@ -7,10 +7,12 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: String,
   resetPasswordToken: String,
+  pal: String,
   image: {
     type: String,
     require: true,
   },
+  used: {type:Boolean, default:false},
   cloudinaryId: {
     type: String,
     require: true,

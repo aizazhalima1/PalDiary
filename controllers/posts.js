@@ -2,6 +2,7 @@ const cloudinary = require("../middleware/cloudinary");
 const Post = require("../models/Post");
 const User= require("../models/User")
 
+
 module.exports = {
   getProfile: async (req, res) => { 
     console.log(req.user)
@@ -62,17 +63,16 @@ module.exports = {
     try {
       console.log('Request Body:', req.body); // Log request body for debugging
   
-      const { title, caption } = req.body;
+      const { diary } = req.body;
   
       // Check if the title and caption are missing
-      if (!title || !caption) {
+      if (!diary) {
         return res.status(400).send('Title and caption are required.');
       }
   
       // Create a new post
       await Post.create({
-        title: title,
-        caption: caption,
+        diary: diary,
         likes: 0, // Default value
         user: req.user ? req.user.id : null, // Ensure req.user exists
       });
@@ -81,6 +81,39 @@ module.exports = {
       res.redirect("/profile");
     } catch (err) {
       console.error('Error creating post:', err);
+      res.status(500).send('Internal Server Error');
+    }
+  },
+  findPal: async (req, res) => {
+    try {
+
+      const result = await User.aggregate([
+        { $match: { used: false, userName: { $ne: req.user.userName } } },
+        { $sample: { size: 1 } }
+      ]);
+
+      if (result.length > 0) {
+        console.log('Random document:', result[0])
+        
+      } else {
+        console.log('No documents found');
+      }
+      await User.findOneAndUpdate(
+       { _id: req.user },
+       { $set: { pal: result[0].userName,used: true } },
+       { new: true },
+       { upsert: true })
+
+       await User.findOneAndUpdate(
+        { userName: result[0].userName },
+        { $set: { pal: req.user.userName,used: true } },
+        { new: true },
+        { upsert: true })
+      
+      console.log("Pal has been assigned");
+      res.redirect("/profile");
+    } catch (err) {
+      console.error('Error assigning pal:', err);
       res.status(500).send('Internal Server Error');
     }
   },

@@ -2,16 +2,16 @@ const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/auth");
 const homeController = require("../controllers/home");
-const postsController = require("../controllers/posts");
+const diaryController = require("../controllers/diary");
 const { ensureAuth } = require("../middleware/auth");
 const auth = require("../middleware/auth");
 
 //Main Routes 
 router.get("/", homeController.getIndex);
-router.get("/profile", ensureAuth, postsController.getProfile);
+router.get("/diary", ensureAuth, diaryController.getDiary);
 
 //Routes for user login/signup
-router.get("/feed", ensureAuth, homeController.getFeed)
+router.get("/profile", ensureAuth, homeController.getProfile)
 router.get("/login", authController.getLogin);
 router.post("/login", authController.postLogin);
 router.get("/logout", authController.logout);

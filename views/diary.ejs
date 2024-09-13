@@ -1,0 +1,54 @@
+<%- include('partials/header') -%>
+<div class="container">
+  <div class="row mt-5">
+      <div class="col-6">
+        <div class="mb-3">
+          <img class="img-fluid" src="<%= user.image%>">
+          <form  action="/diary/createProfilePicture" enctype="multipart/form-data" method="POST">
+          <label for="imgUpload" class="form-label">Image</label>
+          <input type="file" class="form-control" id="imageUpload" name="file">
+         
+        </div>
+        <button type="submit" class="btn btn-primary" value="Upload">Submit</button>
+      </form>  
+              <div>
+          
+              <p><strong>User Name</strong>: <%= user.userName %></p>
+              <p><strong>Email</strong>: <%= user.email %></p>
+              <% if(!user.pal){ %>
+                <form action="/post/findPal" method="POST">
+                <button type="submit" class="btn btn-primary" >Find pal</button>
+                </form>
+              <% }else{ %>
+                <p><strong>Pal</strong>: <%= user.pal %></p>
+                <% } %>
+              <a href="/logout" class="col-3 btn btn-primary">Logout</a>
+              </div>
+          <div class="mt-5">
+            <h2>Our Diary</h2>
+            <form action="/diary/<%= diaryId %>"  method="POST">
+              <div class="mb-3">
+                <label for="caption" class="form-label"></label>
+                <textarea class="form-control" id="diary" name="diary"></textarea>
+              </div>
+                <button type="submit" class="btn btn-primary" >Submit</button>
+            </form>
+          </div>
+      </div>
+      <div class="col-6">
+        <ul class="row list-unstyled">
+        <% for(var i=0; i<post.length; i++) {%>
+          <li >
+        
+            <p> <%= post[i].text %></p> 
+          </li>
+        <% } %>
+        </ul>
+        <div class="row justify-content-center mt-5">
+          <a class="btn btn-primary" href="/feed">Return to Feed</a>
+        </div>  
+      </div>  
+    </div>
+  </div>
+</div>
+<%- include('partials/footer') -%>

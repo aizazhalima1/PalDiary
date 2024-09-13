@@ -7,7 +7,7 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, unique: true },
   password: String,
   resetPasswordToken: String,
-  pal: String,
+  pals:[String],
   image: {
     type: String,
     require: true,

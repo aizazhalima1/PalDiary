@@ -1,13 +1,13 @@
-const Post = require("../models/Post");
+const Diary = require("../models/Diary");
 
 module.exports = {
     getIndex: (req, res) => {
       res.render("index.ejs");
     },
-    getFeed: async (req, res) => {
+    getProfile: async (req, res) => {
       try {
-        const post = await Post.find();
-        res.render("feed.ejs", { post: post, user: req.user});
+        const diary = await Diary.find({ posters: req.user.userName });
+        res.render("profile.ejs", { diary: diary, user: req.user});
       } catch (err) {
         console.log(err);
       }

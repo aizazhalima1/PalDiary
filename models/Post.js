@@ -1,19 +1,20 @@
 const mongoose = require("mongoose");
 
 const PostSchema = new mongoose.Schema({
-  diary: String,
-  likes: {
-    type: Number,
-    required: true,
+  diaryId:  {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Diary",
   },
-  user: {
+  poster: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
   },
+  text: String,
   createdAt: {
     type: Date,
     default: Date.now,
   },
+  
 });
 
 //MongoDB Collection named here - will give lowercase plural of name 

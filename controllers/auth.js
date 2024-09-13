@@ -110,7 +110,8 @@ exports.postSignup = async (req, res, next) => {
       email: req.body.email,
       password: req.body.password,
       cloudinaryId:'v1725253996',
-      image:'//res.cloudinary.com/dqh520gol/image/upload/v1725253996/blank-profile-picture-973460_1280_qei3fs.png'
+      image:'//res.cloudinary.com/dqh520gol/image/upload/v1725253996/blank-profile-picture-973460_1280_qei3fs.png',
+      pals:[]
     });
 
     await user.save();

@@ -9,10 +9,11 @@ const { ensureAuth } = require("../middleware/auth");
 //post/:id, post/createPost, post/likePost/:id, post/deletePost/:id
 //router.get("/", ensureAuth, diaryController.getDiary);
 router.get("/:id", ensureAuth, diaryController.getDiary)
+router.post("/createNewDiary", diaryController.createNewDiary)
 //Add profile picture
 router.post("/createProfilePicture", upload.single("file"), diaryController.createProfilePicture);
 //Assign a pal
-router.post("/findPal", diaryController.findPal);
+router.post("/:id/findPal", diaryController.findPal);
 
 //Enables user to create post 
 router.post("/:id", diaryController.createPost);

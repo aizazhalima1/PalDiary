@@ -1,23 +1,37 @@
 const cloudinary = require("../middleware/cloudinary");
+const mongoose = require('mongoose')
 const Diary = require("../models/Diary");
 const Post = require("../models/Post")
 const User= require("../models/User")
 
 
 module.exports = {
-  getDiary: async (req, res) => { 
-    console.log(req.user)
+  getDiary: async (req, res) => {
+    console.log(req.user);
     try {
-      //Since we have a session each request (req) contains the logged-in users info: req.user
-      //console.log(req.user) to see everything
-      //Grabbing just the posts of the logged-in user
-      const post = await Post.find({ diaryId: req.params.id });
-      console.log(post)
-      //const user = await User.find({ _id: req.user.id });
-      //Sending post data from mongodb and user data to ejs template
-      res.render("diary.ejs", { post: post, user: req.user,diaryId:req.params.id });
+      // Fetch all posts related to the diary
+      const posts = await Post.find({ diaryId: req.params.id }).exec();
+      console.log(posts);
+  
+      // Fetch the diary document by ID
+      const diary = await Diary.findById(req.params.id).exec();
+      console.log(diary);
+  
+      // Handle case where diary is not found
+      if (!diary) {
+        return res.status(404).send('Diary not found');
+      }
+  
+      // Render the diary page with the necessary data
+      res.render('diary.ejs', { 
+        post: posts, 
+        user: req.user, 
+        diaryId: req.params.id, 
+        diary: diary 
+      });
     } catch (err) {
-      console.log(err);
+      console.error('Error fetching diary or posts:', err);
+      res.status(500).send('Internal Server Error');
     }
   },
   //getPost: async (req, res) => {
@@ -87,39 +101,102 @@ module.exports = {
       res.status(500).send('Internal Server Error');
     }
   },
-  findPal: async (req, res) => {
+  createNewDiary: async (req, res) => {
     try {
-
-      const result = await User.aggregate([
-        { $match: { _id: { $ne: req.user.id } } },
-        { $sample: { size: 1 } }
-      ]);
-
-      if (result.length > 0) {
-        console.log('Random document:', result[0])
-        
-      } else {
-        console.log('No documents found');
+      // Ensure req.user is valid
+      if (!req.user || !req.user.userName || !req.user.id) {
+        return res.status(400).send('User information is missing.');
       }
-      await User.findOneAndUpdate(
-       { _id: req.user },
-       {$push: { pals: result[0].userName } },
-       { new: true },
-       { upsert: true })
-
-       await User.findOneAndUpdate(
-        { userName: result[0].userName },
-        { $push: { pals: req.user.userName } },
-        { new: true },
-        { upsert: true })
-      
-      console.log("Pal has been assigned");
-      res.redirect("/diary");
+  
+      // Create new diary document
+      const newDiary = new Diary({
+        posters: [req.user.userName], // Wrap userName in an array
+        postersId: [req.user.id],     // Wrap userId in an array
+      });
+  
+      // Save the new diary document
+      await newDiary.save();
+  
+      console.log("Diary has been created!");
+      console.log(newDiary._id); // Use _id instead of id
+  
+      // Redirect to the new diary page
+      res.redirect(`/diary/${newDiary._id}`);
     } catch (err) {
-      console.error('Error assigning pal:', err);
+      console.error('Error creating diary:', err);
       res.status(500).send('Internal Server Error');
     }
   },
+  findPal: async (req, res) => {
+    try {
+      const currentUserId = new mongoose.Types.ObjectId(req.user.id); // Convert to ObjectId
+      const currentUserName = req.user.userName; // Current user's name
+  
+      // Retrieve the current user's pals list and filter valid ObjectId strings
+      const currentUser = await User.findById(currentUserId).select('pals');
+      if (!currentUser) {
+        return res.status(404).send('Current user not found');
+      }
+  
+      console.log(req.user.pals)
+      
+  
+      // Find a random user who is not the current user and not in the pals array
+      const result = await User.aggregate([
+        {
+          $match: {
+            _id: { $ne: currentUserId },                // Exclude the current user
+            userName: { $nin: req.user.pals } 
+          }
+        },
+       { $sample: { size: 1 } } // Randomly select one user
+      ]);
+      console.log("Result from aggregation:", result);
+    if (result.length === 0) {
+      console.log('No suitable users found');
+      return res.status(404).send('No users available to add as pal');
+    }
+
+    const randomUser = result[0];
+    const randomUserId = randomUser._id;
+    const randomUserName = randomUser.userName;
+
+    console.log('Random document:', randomUser);
+
+    // Add the random user to the current user's pals array
+    await User.findByIdAndUpdate(
+      currentUserId,
+      { $addToSet: { pals: randomUserName } }, // Use $addToSet to avoid duplicates
+      { new: true, upsert: true }
+    );
+
+    // Add the current user to the random user's pals array
+    await User.findByIdAndUpdate(
+      randomUserId,
+      { $addToSet: { pals: currentUserName } }, // Use $addToSet to avoid duplicates
+      { new: true, upsert: true }
+    );
+  
+    //Add current user and pal to diary posters field
+    const diary=await Diary.findByIdAndUpdate(
+    req.params.id,
+      {
+        $push: {  posters: randomUserName , // Add new users if not already present
+        postersId: randomUserId } // Add new IDs if not already present
+      },
+      { new: true }
+    );
+    console.log('Diary has been updated with new users!');
+  
+ const diaryId=req.params.id
+    console.log('Pal has been assigned');
+    res.redirect(`/diary/${diaryId}`);
+  } catch (err) {
+    console.error('Error assigning pal:', err);
+    res.status(500).send('Internal Server Error');
+  
+  }
+}
   //likePost: async (req, res) => {
   //  try {
   //    await Post.findOneAndUpdate(

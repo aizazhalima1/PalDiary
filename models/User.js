@@ -12,7 +12,6 @@ const UserSchema = new mongoose.Schema({
     type: String,
     require: true,
   },
-  used: {type:Boolean, default:false},
   cloudinaryId: {
     type: String,
     require: true,

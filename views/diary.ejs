@@ -15,13 +15,19 @@
           
               <p><strong>User Name</strong>: <%= user.userName %></p>
               <p><strong>Email</strong>: <%= user.email %></p>
-              <% if(!user.pal){ %>
-                <form action="/post/findPal" method="POST">
-                <button type="submit" class="btn btn-primary" >Find pal</button>
-                </form>
-              <% }else{ %>
-                <p><strong>Pal</strong>: <%= user.pal %></p>
+              <% if (diary && Array.isArray(diary.posters)) { %>
+                <% if (diary.posters.length < 2) { %>
+                  <!-- Render the form if the length of posters is less than 2 -->
+                  <form action="/diary/<%= diary._id %>/findPal" method="POST">
+                    <button type="submit" class="btn btn-primary">Find pal</button>
+                  </form>
+                <% } else { %>
+                  <!-- Display information if posters array length is 2 or more -->
+                  <p><strong>Pal:</strong> <%= diary.posters.filter((x)=>x!=user.userName)[0] %></p>
                 <% } %>
+              <% } else { %>
+                <p>No poster information available.</p>
+              <% } %>>
               <a href="/logout" class="col-3 btn btn-primary">Logout</a>
               </div>
           <div class="mt-5">
@@ -45,7 +51,7 @@
         <% } %>
         </ul>
         <div class="row justify-content-center mt-5">
-          <a class="btn btn-primary" href="/feed">Return to Feed</a>
+          <a class="btn btn-primary" href="/profile">Return to Profile</a>
         </div>  
       </div>  
     </div>

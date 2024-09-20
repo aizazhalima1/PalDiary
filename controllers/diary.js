@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const Diary = require("../models/Diary");
 const Post = require("../models/Post")
 const User= require("../models/User")
+const PalRequest= require("../models/PalRequest")
 
 
 module.exports = {
@@ -16,6 +17,10 @@ module.exports = {
       // Fetch the diary document by ID
       const diary = await Diary.findById(req.params.id).exec();
       console.log(diary);
+
+      const request = await PalRequest.findOne({diaryId:req.params.id}).exec();
+      console.log(request)
+     
   
       // Handle case where diary is not found
       if (!diary) {
@@ -27,7 +32,8 @@ module.exports = {
         post: posts, 
         user: req.user, 
         diaryId: req.params.id, 
-        diary: diary 
+        diary: diary,
+        request:request
       });
     } catch (err) {
       console.error('Error fetching diary or posts:', err);
@@ -129,74 +135,109 @@ module.exports = {
   },
   findPal: async (req, res) => {
     try {
-      const currentUserId = new mongoose.Types.ObjectId(req.user.id); // Convert to ObjectId
-      const currentUserName = req.user.userName; // Current user's name
-  
-      // Retrieve the current user's pals list and filter valid ObjectId strings
-      const currentUser = await User.findById(currentUserId).select('pals');
-      if (!currentUser) {
-        return res.status(404).send('Current user not found');
-      }
-  
-      console.log(req.user.pals)
-      
-  
-      // Find a random user who is not the current user and not in the pals array
-      const result = await User.aggregate([
-        {
-          $match: {
-            _id: { $ne: currentUserId },                // Exclude the current user
-            userName: { $nin: req.user.pals } 
-          }
-        },
-       { $sample: { size: 1 } } // Randomly select one user
-      ]);
-      console.log("Result from aggregation:", result);
-    if (result.length === 0) {
-      console.log('No suitable users found');
-      return res.status(404).send('No users available to add as pal');
+        const currentUserId = new mongoose.Types.ObjectId(req.user.id); // Convert to ObjectId
+        const currentUserName = req.user.userName; // Current user's name
+
+        // Retrieve the current user's pals list
+        const currentUser = await User.findById(currentUserId).select('pals');
+        if (!currentUser) {
+            return res.status(404).send('Current user not found');
+        }
+
+        // Find existing requests where the current user is involved
+        const existingRequests = await PalRequest.find({
+            $or: [
+                { requesterId: currentUserId, status: { $in: ['pending', 'accepted'] } },
+                { receiverId: currentUserId, status: { $in: ['pending', 'accepted'] } }
+            ]
+        }).select('receiverId requesterId');
+
+        const excludedUserIds = existingRequests.map(req => req.receiverId).concat(existingRequests.map(req => req.requesterId));
+
+        // Find a random user who is not the current user, not in the pals list, and not excluded
+        const result = await User.aggregate([
+            {
+                $match: {
+                    _id: { $ne: currentUserId }, // Exclude the current user
+                    userName: { $nin: currentUser.pals }, // Exclude existing pals
+                    _id: { $nin: excludedUserIds } // Exclude users with pending/accepted requests
+                }
+            },
+            { $sample: { size: 1 } } // Randomly select one user
+        ]);
+
+        if (result.length === 0) {
+            console.log('No suitable users found');
+            return res.status(404).send('No users available to add as pal');
+        }
+
+        const randomUser = result[0];
+        const randomUserId = randomUser._id;
+        const randomUserName = randomUser.userName;
+
+        // Ensure the selected user is not the same as the requester
+        if (randomUserId.equals(currentUserId)) {
+            return res.status(404).send('Selected user cannot be the same as the requester');
+        }
+
+        // Create a request to connect
+        const request = new PalRequest({
+            diaryId: req.params.id,
+            requesterUserName: currentUserName,
+            receiverUserName: randomUserName,
+            requesterId: currentUserId,
+            receiverId: randomUserId,
+            status: 'pending' // initial status
+        });
+
+        await request.save();
+        const diaryId = req.params.id;
+
+        // Optionally: Notify the random user about the request (e.g., via email or in-app notification)
+        console.log('Pal request sent to', randomUser.userName);
+
+        res.redirect(`/diary/${diaryId}`);
+    } catch (err) {
+        console.error('Error assigning pal:', err);
+        res.status(500).send('Internal Server Error');
     }
-
-    const randomUser = result[0];
-    const randomUserId = randomUser._id;
-    const randomUserName = randomUser.userName;
-
-    console.log('Random document:', randomUser);
-
-    // Add the random user to the current user's pals array
-    await User.findByIdAndUpdate(
-      currentUserId,
-      { $addToSet: { pals: randomUserName } }, // Use $addToSet to avoid duplicates
-      { new: true, upsert: true }
-    );
-
-    // Add the current user to the random user's pals array
-    await User.findByIdAndUpdate(
-      randomUserId,
-      { $addToSet: { pals: currentUserName } }, // Use $addToSet to avoid duplicates
-      { new: true, upsert: true }
-    );
-  
-    //Add current user and pal to diary posters field
-    const diary=await Diary.findByIdAndUpdate(
-    req.params.id,
-      {
-        $push: {  posters: randomUserName , // Add new users if not already present
-        postersId: randomUserId } // Add new IDs if not already present
-      },
-      { new: true }
-    );
-    console.log('Diary has been updated with new users!');
-  
- const diaryId=req.params.id
-    console.log('Pal has been assigned');
-    res.redirect(`/diary/${diaryId}`);
-  } catch (err) {
-    console.error('Error assigning pal:', err);
-    res.status(500).send('Internal Server Error');
-  
-  }
 }
+
+//    console.log('Random document:', randomUser);
+//
+//    // Add the random user to the current user's pals array
+//    await User.findByIdAndUpdate(
+//      currentUserId,
+//      { $addToSet: { pals: randomUserName } }, // Use $addToSet to avoid duplicates
+//      { new: true, upsert: true }
+//    );
+//
+//    // Add the current user to the random user's pals array
+//    await User.findByIdAndUpdate(
+//      randomUserId,
+//      { $addToSet: { pals: currentUserName } }, // Use $addToSet to avoid duplicates
+//      { new: true, upsert: true }
+//    );
+//  
+//    //Add current user and pal to diary posters field
+//    const diary=await Diary.findByIdAndUpdate(
+//    req.params.id,
+//      {
+//        $push: {  posters: randomUserName , // Add new users if not already present
+//        postersId: randomUserId } // Add new IDs if not already present
+//      },
+//      { new: true }
+//    );
+//    console.log('Diary has been updated with new users!');
+//  
+// const diaryId=req.params.id
+//    console.log('Pal has been assigned');
+//    res.redirect(`/diary/${diaryId}`);
+//  } catch (err) {
+//    console.error('Error assigning pal:', err);
+//    res.status(500).send('Internal Server Error');
+//  
+  
   //likePost: async (req, res) => {
   //  try {
   //    await Post.findOneAndUpdate(

@@ -1,0 +1,41 @@
+<%- include('partials/header') -%>
+
+<div>
+    <a class="btn btn-primary" href="/profile">Return to profile</a>
+</div>
+
+<% for (var i = 0; i < request.length; i++) { %>
+    <form class="reqform" method="POST">
+        <h1><%= request[i].requesterUserName %></h1>
+        <button type="button" class="acceptButton" data-id="<%= request[i]._id %>">Accept</button>
+        <button type="button" class="rejectButton" data-id="<%= request[i]._id %>">Reject</button>
+    </form>
+<% } %>
+
+Copy code
+<script>
+    document.querySelectorAll('.acceptButton').forEach(button => {
+        button.addEventListener('click', function(event) {
+            const form = this.closest('form');
+            form.action = `/profile/pal-requests/${this.dataset.id}/accept-request`; // Make sure this is the complete path
+            console.log(`Form action set to: ${form.action}`); // Log the action to verify
+            form.submit();
+        });
+    });
+
+    document.querySelectorAll('.rejectButton').forEach(button => {
+        button.addEventListener('click', function(event) {
+            const form = this.closest('form');
+            form.action = `/profile/pal-requests/${this.dataset.id}/reject-request`; // Ensure this is correct too
+            console.log(`Form action set to: ${form.action}`); // Log the action to verify
+            form.submit();
+        });
+    });
+</script>
+
+<%- include('partials/footer') -%>
+
+
+
+
+

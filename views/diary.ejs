@@ -15,19 +15,22 @@
           
               <p><strong>User Name</strong>: <%= user.userName %></p>
               <p><strong>Email</strong>: <%= user.email %></p>
-              <% if (diary && Array.isArray(diary.posters)) { %>
-                <% if (diary.posters.length < 2) { %>
-                  <!-- Render the form if the length of posters is less than 2 -->
-                  <form action="/diary/<%= diary._id %>/findPal" method="POST">
+              <% if (!request) { %>
+                <form action="/diary/<%= diary._id %>/findPal" method="POST">
                     <button type="submit" class="btn btn-primary">Find pal</button>
-                  </form>
-                <% } else { %>
-                  <!-- Display information if posters array length is 2 or more -->
-                  <p><strong>Pal:</strong> <%= diary.posters.filter((x)=>x!=user.userName)[0] %></p>
+                </form>
+            <% } else { %>
+                <% if (request.status === 'accepted') { %>
+                    <p><strong>Pal:</strong> <%= diary.posters[0] === user.userName ? diary.posters[1] : diary.posters[0] %></p>
+                <% } else if (request.status === 'pending') { %>
+                    <p><strong>Pal:</strong> <%= request.status %></p>
                 <% } %>
-              <% } else { %>
+            <% } %>
+            
+            <% if (!diary || !Array.isArray(diary.posters) || diary.posters.length === 0) { %>
                 <p>No poster information available.</p>
-              <% } %>>
+            <% } %>
+        
               <a href="/logout" class="col-3 btn btn-primary">Logout</a>
               </div>
           <div class="mt-5">

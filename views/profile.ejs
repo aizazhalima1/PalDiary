@@ -3,14 +3,23 @@
     <div>
         <a href="/logout" class="col-2 btn btn-primary">Logout</a>
     </div>
+    <span class="material-symbols-outlined">
+      <a href="/profile/pal-requests/<%= user.id %>">notifications</a>
+      </span>
     <div class="col-6">
       <ul class="row list-unstyled">
-        <% for(var i=0; i<diary.length; i++) {%>
-          <li >
-            <a href="/diary/<%= diary[i]._id%>"> <h2>Diary  </h2>  </a>
-          </li>
+        <% for (var i = 0; i < diary.length; i++) { %>
+            <li>
+                <a href="/diary/<%= diary[i]._id %>">
+                    <% if (diary[i].posters.length == 2) { %>
+                        <h2>Diary of <%= diary[i].posters[0] %> and <%= diary[i].posters[1] %></h2>
+                    <% } else { %>
+                        <h2>Diary</h2>
+                    <% } %>
+                </a>
+            </li>
         <% } %>
-        </ul>
+    </ul>
     </div>
     <form action="/diary/createNewDiary" method="POST">
       <button type="submit">Create a new diary</button>

@@ -3,13 +3,13 @@
   <div class="row mt-5">
       <div class="col-6">
         <div class="mb-3">
-          <img class="img-fluid" src="<%= user.image%>">
-          <form  action="/diary/createProfilePicture" enctype="multipart/form-data" method="POST">
-          <label for="imgUpload" class="form-label">Image</label>
-          <input type="file" class="form-control" id="imageUpload" name="file">
-         
+          <img class=" profile-picture" src="<%= user.image%>">
+          <form  action="/diary/<%= diary._id %>/createProfilePicture" enctype="multipart/form-data" method="POST">
+          <label for="imgUpload" class="form-label"></label>
+          <input type="file" class="form-control custom-file-input" id="imageUpload" name="file">
+            
         </div>
-        <button type="submit" class="btn btn-primary" value="Upload">Submit</button>
+        <button type="submit" class="btn btn-primary submit-button" value="Upload">Submit</button>
       </form>  
               <div>
           
@@ -17,11 +17,13 @@
               <p><strong>Email</strong>: <%= user.email %></p>
               <% if (!request) { %>
                 <form action="/diary/<%= diary._id %>/findPal" method="POST">
-                    <button type="submit" class="btn btn-primary">Find pal</button>
+                    <button type="submit" class="btn btn-primary find-pal-button">Find pal</button>
                 </form>
             <% } else { %>
                 <% if (request.status === 'accepted') { %>
-                    <p><strong>Pal:</strong> <%= diary.posters[0] === user.userName ? diary.posters[1] : diary.posters[0] %></p>
+                    <p><strong>Pal:</strong> <%= request.receiverUserName === user.userName ? request.requesterUserName : request.receiverUserName %></p>
+                    <img class="profile-picture" src="<%= pal ? pal.image : '' %>" alt="Pal's Image">
+                   
                 <% } else if (request.status === 'pending') { %>
                     <p><strong>Pal:</strong> <%= request.status %></p>
                 <% } %>
@@ -31,33 +33,78 @@
                 <p>No poster information available.</p>
             <% } %>
         
-              <a href="/logout" class="col-3 btn btn-primary">Logout</a>
+              
               </div>
           <div class="mt-5">
             <h2>Our Diary</h2>
             <form action="/diary/<%= diaryId %>"  method="POST">
               <div class="mb-3">
                 <label for="caption" class="form-label"></label>
-                <textarea class="form-control" id="diary" name="diary"></textarea>
+                <textarea class="form-control diary-textarea" id="diary" name="diary"></textarea>
               </div>
-                <button type="submit" class="btn btn-primary" >Submit</button>
+                <button type="submit" class="btn btn-primary submit-button" >Submit</button>
             </form>
           </div>
       </div>
       <div class="col-6">
         <ul class="row list-unstyled">
-        <% for(var i=0; i<post.length; i++) {%>
-          <li >
-        
-            <p> <%= post[i].text %></p> 
-          </li>
-        <% } %>
+            <% for(var i=0; i<post.length; i++) { %>
+                <% if(post[i].poster.equals(user._id)) { %>
+                    <li>
+                        <form action="/diary/<%= diary._id %>/edit-post/<%= post[i]._id %>?_method=PUT" method="POST" class="post-form" data-id="<%= post[i]._id %>" data-diary-id="<%= diary._id %>">
+                            <div class="post ">
+                              <p class="content mine"><%= post[i].text %></p>
+                              
+                              <button type="button" class="delete-button material-symbols-outlined">delete</button>
+                            </div>
+                              
+                           
+                        </form>
+                        <div style="display: flex; justify-content:flex-end;">
+                        <span ><%= post[i].datePosted %></span>
+                        </div>
+                    </li>
+                <% } else { %>
+                    <li>
+                      <div class="post not-mine post-box" >
+                        <p class="content"><%= post[i].text %></p>
+                      </div>
+                        <div style="display: flex; justify-content:flex-start;">
+                        <span ><%= post[i].datePosted %></span>
+                      
+                      </div>
+                    </li>
+                <% } %>
+            <% } %>
         </ul>
-        <div class="row justify-content-center mt-5">
-          <a class="btn btn-primary" href="/profile">Return to Profile</a>
-        </div>  
+       </div>
+      
+        <div class="profile-logout" style="justify-content: flex-start;">
+          <a class="btn btn-primary profile-button" href="/profile">Return to Profile</a>
+          <a href="/logout" class=" btn btn-primary logout-button">Logout</a>
+        </div>
       </div>  
     </div>
   </div>
 </div>
 <%- include('partials/footer') -%>
+<script>
+
+document.querySelectorAll('.delete-button').forEach(button => {
+    button.addEventListener('click', function() {
+        const postForm = this.closest('.post-form');
+        
+        // Confirm deletion
+        if (confirm('Are you sure you want to delete this post?')) {
+            // Get the post ID from data-id
+            const postId = postForm.dataset.id; // This should correctly reference the post ID
+            
+            // Set the action for the form to include the DELETE method
+            postForm.action = `/diary/${postForm.dataset.diaryId}/edit-post/${postId}?_method=DELETE`;
+            // Submit the form to delete
+            postForm.submit();
+        }
+    });
+});
+ 
+</script>

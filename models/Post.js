@@ -17,5 +17,5 @@ const PostSchema = new mongoose.Schema({
   
 });
 
-//MongoDB Collection named here - will give lowercase plural of name 
+
 module.exports = mongoose.model("Post", PostSchema);

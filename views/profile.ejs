@@ -1,31 +1,59 @@
 <%- include('partials/header') -%>
-
-    <div>
-        <a href="/logout" class="col-2 btn btn-primary">Logout</a>
-    </div>
+    <div class="notify-new">
+    <% if(requests.length!=0){ %>
     <span class="material-symbols-outlined">
-      <a href="/profile/pal-requests/<%= user.id %>">notifications</a>
-      </span>
-    <div class="col-6">
-      <ul class="row list-unstyled">
-        <% for (var i = 0; i < diary.length; i++) { %>
-            <li>
-                <a href="/diary/<%= diary[i]._id %>">
-                    <% if (diary[i].posters.length == 2) { %>
-                        <h2>Diary of <%= diary[i].posters[0] %> and <%= diary[i].posters[1] %></h2>
-                    <% } else { %>
-                        <h2>Diary</h2>
-                    <% } %>
-                </a>
-            </li>
-        <% } %>
-    </ul>
+      <a href="/profile/pal-requests/<%= user.id %>" style="color:red">notifications</a>
+    </span>
+    <% }else{ %>
+        <span class="material-symbols-outlined">
+            <a href="/profile/pal-requests/<%= user.id %>" class="notifications">notifications</a>
+        </span>
+       <% } %>
+   
+       <form action="/diary/createNewDiary" method="POST" class="new-diary-form">
+        <button type="submit" class="btn-primary new-diary-button">Create a new diary</button>
+      </form>
     </div>
-    <form action="/diary/createNewDiary" method="POST">
-      <button type="submit">Create a new diary</button>
-    </form>
     <div>
-        <a class="btn btn-primary" href="/profile">Return to profile</a>
-    </div>  
+        <ul style="list-style: none" >
+            <% for (var i = 0; i < diary.length; i++) { %>
+                <li class="diary-list">
+                    <a class="diary-name-link" href="/diary/<%= diary[i]._id %>">
+                        <% if (diary[i].posters.length == 2) { %>
+                            <h2 class="diary-name">Diary of <%= user.userName %> and <%= diary[i].posters.filter((x)=>x!=user.userName)[0] %></h2>
+                        <% } else { %>
+                            <div class="post individual-diary" style="justify-content: center;">
+                            <h2 style="display: inline;" class="diary-name">Diary</h2>
+                            <form action="/profile/delete-diary/<%= diary[i]._id %>?_method=DELETE" method="POST" class="post-form">
+                            <button type="submit" class="delete-button material-symbols-outlined">delete</button>
+                            </form>
+                        </div>
+                        <% } %>
+                    </a>
+                </li>
+            <% } %>
+        </ul>
+    </div>
+   
+    <div class="profile-logout">
+        <a class=" btn-primary profile-button" href="/profile">Return to profile</a>
+    
+   
+        <a href="/logout" class=" btn btn-primary logout-button">Logout</a>
+    </div>
      
 <%- include('partials/footer') -%>
+<script>
+document.querySelectorAll('.delete-button').forEach(button => {
+    button.addEventListener('click', function(event) {
+        const postForm = this.closest('.post-form');
+        
+        // Confirm deletion
+        if (confirm('Are you sure you want to delete this diary?')) {
+            postForm.submit();
+        } else {
+            event.preventDefault(); // Prevent default action if not confirmed
+        }
+    });
+});
+</script>

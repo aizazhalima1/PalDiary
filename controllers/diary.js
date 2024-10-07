@@ -8,81 +8,116 @@ const PalRequest= require("../models/PalRequest")
 
 module.exports = {
   getDiary: async (req, res) => {
-    console.log(req.user);
+   
     try {
-      // Fetch all posts related to the diary
-      const posts = await Post.find({ diaryId: req.params.id }).exec();
-      console.log(posts);
-  
-      // Fetch the diary document by ID
-      const diary = await Diary.findById(req.params.id).exec();
-      console.log(diary);
+        // Fetch all posts related to the diary
+        const posts = await Post.find({ diaryId: req.params.id }).exec();
+        const formattedPosts = posts.map(post => {
+          const createdAt = post.createdAt;
 
-      const request = await PalRequest.findOne({diaryId:req.params.id}).exec();
-      console.log(request)
-     
-  
-      // Handle case where diary is not found
-      if (!diary) {
-        return res.status(404).send('Diary not found');
-      }
-  
-      // Render the diary page with the necessary data
-      res.render('diary.ejs', { 
-        post: posts, 
-        user: req.user, 
-        diaryId: req.params.id, 
-        diary: diary,
-        request:request
+          // Format the date
+          const options = { day: '2-digit', month: 'short', year: 'numeric' };
+          const formattedDate = createdAt.toLocaleDateString('en-GB', options);
+
+          const hours = createdAt.getHours();
+          const minutes = createdAt.getMinutes();
+          const ampm = hours >= 12 ? 'PM' : 'AM';
+
+          const formattedHours = hours % 12 || 12; // Convert to 12-hour format
+          const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+
+          return {
+              ...post._doc, // Spread operator to include existing post fields
+              datePosted: `${formattedDate} ${formattedHours}:${formattedMinutes} ${ampm}` // Add formatted date
+          };
       });
+
+        
+        // Fetch the diary document by ID
+        const diary = await Diary.findById(req.params.id).exec();
+
+        // Initialize variables
+        let palId = null;
+        let pal = null;
+        const request = await PalRequest.findOne({ diaryId: req.params.id }).exec();
+        //console.log(request)
+        // Check if request exists and has been accepted
+        if (request && request.status === 'accepted') {
+            if (req.user._id.equals(request.receiverId)) {
+                palId = request.requesterId;
+                pal = await User.findOne({ _id: palId }).exec(); // Fetch pal details
+               
+              }
+              else{
+                palId = request.receiverId;
+                pal = await User.findOne({ _id: palId }).exec();
+
+              }
+         
+        }
+        //console.log(pal)
+        
+     
+        // Handle case where diary is not found
+        if (!diary) {
+            return res.status(404).send('Diary not found');
+        }
+
+        // Render the diary page with the necessary data
+        res.render('diary.ejs', { 
+            post: formattedPosts,
+            user: req.user, 
+            diaryId: req.params.id, 
+            diary: diary,
+            request: request,
+            pal: pal // This will be null if not found
+        });
     } catch (err) {
-      console.error('Error fetching diary or posts:', err);
-      res.status(500).send('Internal Server Error');
+        //console.error('Error fetching diary or posts:', err);
+        res.status(500).send('Internal Server Error');
     }
-  },
-  //getPost: async (req, res) => {
-  //  try {
-  //    //id parameter comes from the post routes
-  //    //router.get("/:id", ensureAuth, postsController.getPost);
-  //    //http://localhost:2121/post/631a7f59a3e56acfc7da286f
-  //    //id === 631a7f59a3e56acfc7da286f
-  //    const post = await Post.findById(req.params.id);
-  //    res.render("post.ejs", { post: post, user: req.user});
-  //  } catch (err) {
-  //    console.log(err);
-  //  }
-  //},
-  createProfilePicture: async (req, res) => {
+},
+
+  createProfilePicture: 
+  async (req, res) => {
     try {
-      let user = await User.findOne({ _id: req.user })
-      console.log(user)
-      await cloudinary.uploader.destroy(user.cloudinaryId)
-      // Upload image to cloudinary
-      const result = await cloudinary.uploader.upload(req.file.path);
-      console.log(result)
-      //media is stored on cloudainary - the above request responds with url to media and the media id that you will need when deleting content 
-      await User.findOneAndUpdate(
-        { _id: req.user },
-        { $set: { cloudinaryId: result.public_id, image: result.secure_url } },
-        { new: true },
-        console.log(req.user)
-        //(err, user) => {
-        //  if (err) {
-        //    console.error(err);
-        //    return;
-        //  }
-        //  console.log(user);
-        //}
-      )
-      console.log("Picture has been changed");
-      res.redirect("/diary");
+        // Fetch the user based on the user ID in the session
+        let user = await User.findById(req.user);
+        //console.log(user);
+
+        // If user exists and has a cloudinaryId, destroy the old image
+        if (user && user.cloudinaryId) {
+            await cloudinary.uploader.destroy(user.cloudinaryId);
+        }
+
+        // Upload the new image to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path);
+       
+
+        // Update the user with the new image and cloudinaryId
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user,
+            { 
+                $set: { 
+                    cloudinaryId: result.public_id, 
+                    image: result.secure_url 
+                } 
+            },
+            { new: true } // Return the updated user
+        );
+
+        console.log("Picture has been changed", updatedUser);
+        // Redirect to the diary page with the user's ID
+        res.redirect(`/diary/${req.params.id}`);
     } catch (err) {
-      console.log(err);
+        //console.error('Error updating profile picture:', err);
+        res.status(500).send('File size too large');
     }
-  },
+},
+
   createPost: async (req, res) => {
     try {
-      console.log('Request Body:', req.body.diary); // Log request body for debugging
+      //console.log('Request Body:', req.body.diary); // Log request body for debugging
   
       const text= req.body.diary;
       
@@ -100,10 +135,10 @@ module.exports = {
         //user: req.user ? req.user.id : null, // Ensure req.user exists
       });
   
-      console.log("Post has been added!");
+      //console.log("Post has been added!");
       res.redirect(`/diary/${diaryId}`);
     } catch (err) {
-      console.error('Error creating post:', err);
+      //console.error('Error creating post:', err);
       res.status(500).send('Internal Server Error');
     }
   },
@@ -123,13 +158,13 @@ module.exports = {
       // Save the new diary document
       await newDiary.save();
   
-      console.log("Diary has been created!");
-      console.log(newDiary._id); // Use _id instead of id
+      //console.log("Diary has been created!");
+      //console.log(newDiary._id);
   
       // Redirect to the new diary page
       res.redirect(`/diary/${newDiary._id}`);
     } catch (err) {
-      console.error('Error creating diary:', err);
+      //console.error('Error creating diary:', err);
       res.status(500).send('Internal Server Error');
     }
   },
@@ -167,7 +202,7 @@ module.exports = {
         ]);
 
         if (result.length === 0) {
-            console.log('No suitable users found');
+            //console.log('No suitable users found');
             return res.status(404).send('No users available to add as pal');
         }
 
@@ -193,77 +228,32 @@ module.exports = {
         await request.save();
         const diaryId = req.params.id;
 
-        // Optionally: Notify the random user about the request (e.g., via email or in-app notification)
-        console.log('Pal request sent to', randomUser.userName);
+      
+        //console.log('Pal request sent to', randomUser.userName);
 
         res.redirect(`/diary/${diaryId}`);
     } catch (err) {
-        console.error('Error assigning pal:', err);
+        //console.error('Error assigning pal:', err);
         res.status(500).send('Internal Server Error');
     }
-}
+},
+ deletePost:async (req, res) => {
+  try {
+      const { id, postId } = req.params;
 
-//    console.log('Random document:', randomUser);
-//
-//    // Add the random user to the current user's pals array
-//    await User.findByIdAndUpdate(
-//      currentUserId,
-//      { $addToSet: { pals: randomUserName } }, // Use $addToSet to avoid duplicates
-//      { new: true, upsert: true }
-//    );
-//
-//    // Add the current user to the random user's pals array
-//    await User.findByIdAndUpdate(
-//      randomUserId,
-//      { $addToSet: { pals: currentUserName } }, // Use $addToSet to avoid duplicates
-//      { new: true, upsert: true }
-//    );
-//  
-//    //Add current user and pal to diary posters field
-//    const diary=await Diary.findByIdAndUpdate(
-//    req.params.id,
-//      {
-//        $push: {  posters: randomUserName , // Add new users if not already present
-//        postersId: randomUserId } // Add new IDs if not already present
-//      },
-//      { new: true }
-//    );
-//    console.log('Diary has been updated with new users!');
-//  
-// const diaryId=req.params.id
-//    console.log('Pal has been assigned');
-//    res.redirect(`/diary/${diaryId}`);
-//  } catch (err) {
-//    console.error('Error assigning pal:', err);
-//    res.status(500).send('Internal Server Error');
-//  
-  
-  //likePost: async (req, res) => {
-  //  try {
-  //    await Post.findOneAndUpdate(
-  //      { _id: req.params.id },
-  //      {
-  //        $inc: { likes: 1 },
-  //      }
-  //    );
-  //    console.log("Likes +1");
-  //    res.redirect(`/post/${req.params.id}`);
-  //  } catch (err) {
-  //    console.log(err);
-  //  }
-  //},
-  //deletePost: async (req, res) => {
-  //  try {
-  //    // Find post by id
-  //    let post = await Post.findById({ _id: req.params.id });
-  //    // Delete image from cloudinary
-  //    await cloudinary.uploader.destroy(post.cloudinaryId);
-  //    // Delete post from db
-  //    await Post.remove({ _id: req.params.id });
-  //    console.log("Deleted Post");
-  //    res.redirect("/profile");
-  //  } catch (err) {
-  //    res.redirect("/profile");
-  //  }
-  //},
+      // Find and delete the post by ID
+      const deletedPost = await Post.findByIdAndDelete(postId);
+      console.log('post deleted')
+      if (!deletedPost) {
+          return res.status(404).send('Post not found');
+      }
+
+   
+      res.redirect(`/diary/${id}`); // Redirect to the diary view after deletion
+  } catch (error) {
+      //console.error(error);
+      res.status(500).send('Server error');
+  }
+},
+
 };

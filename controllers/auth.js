@@ -5,31 +5,33 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt')
 
+
 exports.getLogin = (req, res) => {
   if (req.user) {
-    return res.redirect("/profile");
+    return res.redirect("/profile"); //renders profile page if user is logged in
   }
-  res.render("login", {
+  res.render("login", { //renders login page
     title: "Login",
   });
 };
+
 
 exports.postLogin = async (req, res, next) => {
   try{
   const validationErrors = [];
   if (!validator.isEmail(req.body.email))
-    validationErrors.push({ msg: "Please enter a valid email address." });
+    validationErrors.push({ msg: "Please enter a valid email address." }); //incase email is invalid
   if (validator.isEmpty(req.body.password))
-    validationErrors.push({ msg: "Password cannot be blank." });
+    validationErrors.push({ msg: "Password cannot be blank." }); //incase password is blank
 
   if (validationErrors.length) {
     req.flash("errors", validationErrors);
-    return res.redirect("/login");
+    return res.redirect("/login"); // if errors, redirect login page
   }
   req.body.email = validator.normalizeEmail(req.body.email, {
     gmail_remove_dots: false,
   });
-
+//passport to authenticate
   passport.authenticate("local", (err, user, info) => {
     if (err) {
       return next(err);
@@ -51,6 +53,7 @@ exports.postLogin = async (req, res, next) => {
 }
 };
 
+
 exports.logout = (req, res) => {
   req.logout(function (err) {
     if (err) {
@@ -64,11 +67,12 @@ exports.logout = (req, res) => {
   });
 };
 
+//renders signup-page
 exports.getSignup = (req, res) => {
   if (req.user) {
-    return res.redirect("/profile");
+    return res.redirect("/profile"); 
   }
-  res.render("signup", {
+  res.render("signup", {   //renders signup if no errors
     title: "Create Account",
   });
 };
@@ -78,7 +82,7 @@ exports.postSignup = async (req, res, next) => {
     const validationErrors = [];
     if (!validator.isEmail(req.body.email))
       validationErrors.push({ msg: "Please enter a valid email address." });
-    if (!validator.isLength(req.body.password, { min: 8 })){
+    if (!validator.isLength(req.body.password, { min: 8 })){  //password should have atleast 8 characters
       validationErrors.push({
         msg: "Password must be at least 8 characters long"
       })};
@@ -94,7 +98,7 @@ exports.postSignup = async (req, res, next) => {
       gmail_remove_dots: false
     });
 
-    const existingUser = await User.findOne({
+    const existingUser = await User.findOne({     //check if email and userName already exists
       $or: [{ email: req.body.email }, { userName: req.body.userName }]
     });
 
@@ -104,17 +108,17 @@ exports.postSignup = async (req, res, next) => {
       });
       return res.redirect("../signup");
     }
-
+    //create new user document
     const user = new User({
       userName: req.body.userName,
       email: req.body.email,
       password: req.body.password,
       cloudinaryId:'v1725253996',
-      image:'//res.cloudinary.com/dqh520gol/image/upload/v1725253996/blank-profile-picture-973460_1280_qei3fs.png',
-      pals:[]
+      image:'//res.cloudinary.com/dqh520gol/image/upload/v1725253996/blank-profile-picture-973460_1280_qei3fs.png', //no-profile-image
+      pals:[] //empty pal array
     });
 
-    await user.save();
+    await user.save(); //save user
 
     req.logIn(user, (err) => {
       if (err) {
@@ -129,14 +133,16 @@ exports.postSignup = async (req, res, next) => {
 
 exports.getRequest = (req, res) => {
 
-  res.render("reset", {
+  res.render("reset", {  //renders reset page
     title: "Reset",
   });
 };
+
+
 exports.requestReset = async (req, res, next) => {
   const { email } = req.body;
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email }); //fetch user with email
   if (!user) {
     return res.status(400).send('No account with that email found.');
   }
@@ -151,7 +157,7 @@ exports.requestReset = async (req, res, next) => {
 
   // Send the token via email
   const transporter = nodemailer.createTransport({
-    service: process.env.SERVICE, // Configure your email service
+    service: process.env.SERVICE, // Configure email service
     port:process.env.PORT,
     auth: {
       user: process.env.USER,
@@ -160,7 +166,7 @@ exports.requestReset = async (req, res, next) => {
     },
   });
 
-
+//email body
   const mailOptions = {
     to: user.email,
     from: process.env.USER,
@@ -174,6 +180,8 @@ exports.requestReset = async (req, res, next) => {
   await transporter.sendMail(mailOptions);
   res.status(200).send('Password reset link sent to your email.');
 };
+
+
 exports.getResetRequest = (req, res) => {
 
   res.render("change", {
@@ -198,20 +206,20 @@ exports.postResetRequest = async (req, res) => {
   }
 
   try {
-    const user = await User.findOne({
+    const user = await User.findOne({  //fetch user with token
       resetPasswordToken: token,
-      resetPasswordExpires: { $gt: Date.now() }
+      resetPasswordExpires: { $gt: Date.now() } //ensure token has not expired
     });
 
     if (!user) {
       return res.status(400).send('Password reset token is invalid or has expired.');
     }
-
+    //update user with new password 
     user.password = password;
-    user.resetPasswordToken = undefined;
+    user.resetPasswordToken = undefined; //token undefined
     user.resetPasswordExpires = undefined;
 
-    await user.save();
+    await user.save(); //save user
 
     res.status(200).send('Password has been reset.');
   } catch (error) {

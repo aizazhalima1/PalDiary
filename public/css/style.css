@@ -1,0 +1,222 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+html, body {
+    width: 100%;
+    height: 100%;
+    background-color: #FFF9E6;
+    color: #2C3E50;
+   
+}
+.app-name:hover {
+    color: grey; 
+    
+}
+
+.app-name{
+    
+        font-size: 48px; /* Default size for desktop */
+        text-decoration: none;
+    
+        @media (max-width: 768px) {
+            font-size: 34px;
+        
+    }
+    
+    
+    @media (max-width: 576px) {
+            font-size: 24px;
+    }
+}
+.tag-name{
+        font-size: 24px; 
+    
+    @media (max-width: 768px) {
+      
+            font-size: 20px;
+        
+    }
+    
+
+    @media (max-width: 576px) {
+            font-size: 16px;
+        
+    }
+}
+
+
+.full-width-header {
+    background-color:#FF6F61;
+    padding: 0;
+    margin:0;
+    width:100%;
+    height: 30%;
+   
+}
+.full-width-header *{
+color: white;}
+
+.login-button, .signup-button, .submit-button, .forgot-password-button, .profile-button, .logout-button, .new-diary-button,.accept-button,.reject-button, .find-pal-button{
+    background-color: #003366;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin: 5px 10px;
+    text-decoration: none;
+    font-size: 16px;
+}
+.notifications{
+    font-size: 35px;
+    text-decoration: none;
+    color: gray;
+    text-align: center;
+ }
+
+ .new-diary-form{
+    display: inline-block;
+
+ }
+.material-symbols-outlined{
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin: 5px 10px;
+}
+.new-diary-button{
+    align-items: center;
+}
+.notify-new{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.diary-list::marker{
+    font-weight: 500;
+    line-height: 1.2;
+    font-size: calc(1.325rem + .9vw);
+    color: grey;
+    text-align: center;
+}
+
+.diary-list{
+    margin-left: 1rem;
+    text-align: center;
+ 
+}
+
+.diary-name{
+    color: grey;
+    text-align: center;
+  
+}
+
+.diary-name-link{
+    text-decoration: none;
+    }
+
+div.post{
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+}
+.profile-logout{
+    display: flex;
+    justify-content: center;
+}
+.delete-button{
+    border: none;
+    background-color: #FFF9E6;
+    font-size: 35px;
+    color: grey;
+}
+
+.profile-picture{
+width:30%;
+height: auto;
+}
+.custom-file-input {
+    border: 2px solid grey; 
+    border-radius: 0.25rem;    
+    background-color:grey; 
+    padding: 10px;              
+}
+
+.custom-file-input:focus {
+    border-color: #0056b3; 
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25); 
+}
+
+.diary-textarea {
+    height: 200px; 
+    resize: both; 
+}
+@media (max-width: 576px) {
+    .custom-textarea {
+        height: 150px; 
+    }
+}
+
+.content{
+    font-size: 1.2rem; 
+    line-height: 1.5;  
+
+@media (max-width: 768px) {
+  
+        font-size: 1.1rem; 
+    
+}
+
+
+@media (max-width: 576px) {
+  
+        font-size: 1rem; 
+    
+}
+}
+
+.mine{
+    background-color: #FFFACD ; 
+    border: 1px solid #ddd;   
+    border-radius: 8px;      
+    padding: 20px;            
+    margin: 20px 0;          
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
+    text-align: right;
+    
+
+
+}
+div.post.not-mine{
+   justify-content: flex-start;
+   border: 1px solid #ddd;  
+   border-radius: 8px;       
+   padding: 20px;            
+   margin: 20px 0;          
+   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
+  
+}
+
+.pal-req-div{
+ 
+        border: 1px solid rgba(0, 0, 0, 0.1); 
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); 
+        border-radius: 5px; 
+        padding: 10px; 
+        background-color:#D8CFC4; 
+    
+}
+
+#exampleInputEmail1{
+    width: 50%;
+}
+#exampleInputPassword1,#exampleInputPassword2{
+    width: 30%;
+}
+
+footer{
+    height: 60px;
+    background-color: #FFF9E6; 
+    text-align: center;
+    padding: 20px 0; 
+}

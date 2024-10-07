@@ -1,20 +1,28 @@
 <%- include('partials/header') -%>
 
+
 <div>
-    <a class="btn btn-primary" href="/profile">Return to profile</a>
+<% if(request && request.length>0){ %>
+<% for (var i = 0; i < request.length; i++) { %>
+    <div class="pal-req-div">
+        <form class="reqform" method="POST">
+        <h2 style="padding-left: 2em;"><%= request[i].requesterUserName %></h2>
+        <button type="button" class="accept-button btn-primary" data-id="<%= request[i]._id %>">Accept</button>
+        <button type="button" class="reject-button btn-primary" data-id="<%= request[i]._id %>">Reject</button>
+        </form>
+   </div>
+<% } %>
+</div>
+<% }else{ %>
+    <p style="padding-left: 1em;">No pending requests</p>
+<% } %>
+<div>
+    <a class="btn btn-primary profile-button" href="/profile">Return to profile</a>
 </div>
 
-<% for (var i = 0; i < request.length; i++) { %>
-    <form class="reqform" method="POST">
-        <h1><%= request[i].requesterUserName %></h1>
-        <button type="button" class="acceptButton" data-id="<%= request[i]._id %>">Accept</button>
-        <button type="button" class="rejectButton" data-id="<%= request[i]._id %>">Reject</button>
-    </form>
-<% } %>
 
-Copy code
 <script>
-    document.querySelectorAll('.acceptButton').forEach(button => {
+    document.querySelectorAll('.accept-button').forEach(button => {
         button.addEventListener('click', function(event) {
             const form = this.closest('form');
             form.action = `/profile/pal-requests/${this.dataset.id}/accept-request`; // Make sure this is the complete path
@@ -23,7 +31,7 @@ Copy code
         });
     });
 
-    document.querySelectorAll('.rejectButton').forEach(button => {
+    document.querySelectorAll('.reject-button').forEach(button => {
         button.addEventListener('click', function(event) {
             const form = this.closest('form');
             form.action = `/profile/pal-requests/${this.dataset.id}/reject-request`; // Ensure this is correct too

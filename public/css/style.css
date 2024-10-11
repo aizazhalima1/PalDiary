@@ -210,8 +210,8 @@ div.post.not-mine{
 #exampleInputEmail1{
     width: 50%;
 }
-#exampleInputPassword1,#exampleInputPassword2{
-    width: 30%;
+#exampleInputPassword1,#exampleInputPassword2,#userName,#password,#confirmPassword{
+    width: 50%;
 }
 
 footer{

@@ -178,6 +178,8 @@ module.exports = {
         if (!currentUser) {
             return res.status(404).send('Current user not found');
         }
+ 
+
 
         // Find existing requests where the current user is involved
         const existingRequests = await PalRequest.find({

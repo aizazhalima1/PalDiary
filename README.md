@@ -26,12 +26,15 @@
   <span>Website link: https://paldiary.onrender.com/</span>
 
 
-<img width="914" alt="picture-upload" src="https://github.com/user-attachments/assets/a21b7899-a2dc-4d21-9f43-638bbf19f050">
+
 <img width="914" alt="diary" src="https://github.com/user-attachments/assets/a2487d88-d9d9-49a4-ac11-6e5bfa2b711c">
 
 
 <img width="914" alt="notification" src="https://github.com/user-attachments/assets/3dd37b72-2db3-4f07-854b-68213ec404d0">
-
+<img width="914" alt="no req" src="https://github.com/user-attachments/assets/6f42b1f6-8a5c-4aac-b580-2a6415a9c3a5">
+<img width="914" alt="picture-upload" src="https://github.com/user-attachments/assets/a21b7899-a2dc-4d21-9f43-638bbf19f050">
 <img width="914" alt="post" src="https://github.com/user-attachments/assets/79219b31-9028-41d8-ad83-1b5205018bb2">
+
+
 
 

@@ -23,6 +23,8 @@
     <li><strong>Email Notifications:</strong>  Nodemailer for sending password reset links</li>
   </ul>
 
+  <span>Website link: https://paldiary.onrender.com/</span>
+
 
 
 
